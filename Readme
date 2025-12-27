@@ -1,0 +1,75 @@
+For this project a dataset for a fictious software company called Atlas Labs is explored. This is a human resource project. EDA is done, powerful visualizations are created using PowerBI visualizations and DAX measures. This analysis will help the organizations determine what action they need to take to retain the employees.
+
+We have created one Facts table called FactPerformanceRating and 5 dimensions table for the star schema, the 5 dimensions tables are DimDate, DimEducationLevel, DimRatingLevel, DimSatisfiedLevel and DimEmployee.
+
+To achieve the perfect visualization different measures have been created using DAX,
+
+% Attrition Rate = DIVIDE([InactiveEmployees], [TotalEmployees])
+
+% Attrition Rate Date = DIVIDE([InactiveEmployeesDate], [TotalEmployeesDate])
+
+ActiveEmployees = CALCULATE([TotalEmployees], FILTER(DimEmployee, DimEmployee[Attrition] = "No"))
+
+AverageSalary = AVERAGE(DimEmployee[Salary])
+
+EnvironmentSatisfaction = 
+CALCULATE (
+    MAX ( FactPerformanceRating[EnvironmentSatisfaction] ),
+    USERELATIONSHIP ( FactPerformanceRating[EnvironmentSatisfaction], DimSatisfiedLevel[SatisfactionID] )
+)
+
+InactiveEmployees = CALCULATE([TotalEmployees], FILTER(DimEmployee, DimEmployee[Attrition] = "Yes"))
+
+InactiveEmployeesDate = CALCULATE([InactiveEmployees], USERELATIONSHIP(DimEmployee[HireDate], DimDate[Date]))
+
+JobSatisfaction = MAX(FactPerformanceRating[JobSatisfaction])
+
+LastReviewDate = 
+IF (
+    MAX ( FactPerformanceRating[ReviewDate] ) = BLANK (),
+    "No Review Yet",
+    MAX ( FactPerformanceRating[ReviewDate] )
+)
+
+ManagerRating = 
+CALCULATE (
+    MAX ( FactPerformanceRating[ManagerRating] ),
+    USERELATIONSHIP ( FactPerformanceRating[ManagerRating], DimRatingLevel[RatingID] )
+)
+
+NextReviewDate = 
+VAR reviewOrHire =
+    IF (
+        MAX ( FactPerformanceRating[ReviewDate] ) = BLANK (),
+        MAX ( DimEmployee[HireDate] ),
+        MAX ( FactPerformanceRating[ReviewDate] )
+    )
+RETURN
+    reviewOrHire + 365
+
+RelationshipSatisfaction = 
+CALCULATE (
+    MAX ( FactPerformanceRating[RelationshipSatisfaction] ),
+    USERELATIONSHIP ( FactPerformanceRating[RelationshipSatisfaction], DimSatisfiedLevel[SatisfactionID] )
+)
+
+SelfRating = 
+CALCULATE (
+    MAX ( FactPerformanceRating[SelfRating] ),
+    USERELATIONSHIP ( FactPerformanceRating[SelfRating], DimRatingLevel[RatingID] )
+)
+
+TotalEmployees = DISTINCTCOUNT(DimEmployee[EmployeeID])
+
+TotalEmployeesDate = 
+CALCULATE (
+    [TotalEmployees],
+    USERELATIONSHIP ( DimEmployee[HireDate], DimDate[Date] )
+)
+
+WorkLifeBalance = 
+CALCULATE (
+    MAX ( FactPerformanceRating[WorkLifeBalance] ),
+    USERELATIONSHIP ( FactPerformanceRating[WorkLifeBalance], DimSatisfiedLevel[SatisfactionID] )
+)
+
